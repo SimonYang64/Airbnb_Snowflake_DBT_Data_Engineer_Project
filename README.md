@@ -322,21 +322,6 @@ Potential improvements to expand the project include:
 
 ---
 
-## 📚 Acknowledgments
-
-This project was developed while following and expanding upon Ansh Lamba's **Airbnb End-to-End Data Engineering Project** tutorial.
-
-The tutorial provided the foundation for exploring AWS S3, Snowflake, and dbt integration.
-
-Throughout the implementation, I configured my own development environment, worked through integration and transformation issues, and gained practical experience building and troubleshooting the pipeline.
-
-**Original resources:**
-
-- [Ansh Lamba's GitHub Repository](https://github.com/anshlambagit/Airbnb_Snowflake_DBT_Data_Engineer_Project)
-- [Airbnb End-to-End Data Engineering Tutorial](https://www.youtube.com/watch?v=3SZSDKEZqoA)
-
----
-
 ## 👨‍💻 About Me
 
 Hi! I'm **Simon Yang**, an undergraduate student at the **University of North Carolina at Chapel Hill**, interested in data engineering, cloud technologies, and data analytics.
