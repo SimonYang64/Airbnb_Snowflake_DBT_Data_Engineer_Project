@@ -3,89 +3,90 @@
 
 ## 📋 Overview
 
-This project demonstrates an end-to-end cloud data engineering pipeline built using **Amazon Web Services (AWS S3), Snowflake, dbt (Data Build Tool), SQL, and Python**.
+This project demonstrates an end-to-end cloud data engineering pipeline built using **AWS S3, Snowflake, dbt (Data Build Tool), SQL, and Python**.
 
-The pipeline processes Airbnb bookings, listings, and host data, transforming raw CSV files into structured, analytics-ready datasets using a **Medallion Architecture (Bronze, Silver, and Gold)**.
+The pipeline integrates Airbnb booking, listing, and host datasets into a cloud data warehouse, where raw information is processed through a **Medallion Architecture (Bronze, Silver, and Gold)** to produce structured, analytics-ready data.
 
-The project focuses on cloud data integration, data warehousing, SQL transformations, incremental processing, reusable dbt macros, data modeling, and historical data tracking.
+The project focuses on cloud data ingestion, ELT development, incremental processing, data transformation, reusable SQL logic, and analytical data modeling.
 
-It was developed as a hands-on learning project to strengthen my practical data engineering skills and gain experience working with modern cloud-based data platforms.
+I developed this project as a hands-on learning experience to strengthen my data engineering skills and gain practical exposure to modern cloud data technologies.
 
 ---
 
 ## 🏗️ Data Architecture
 
-The pipeline follows a layered data architecture designed to separate raw ingestion, data transformation, and analytical consumption.
+### Data Pipeline
 
-### Data Flow
+The project follows a layered architecture that separates data storage, ingestion, transformation, and analytical consumption.
 
 ```text
-                Airbnb CSV Datasets
-                        |
-                        v
-                 Amazon AWS S3
-                  (Raw Storage)
-                        |
-                        v
-                  Snowflake
-                 STAGING Layer
-                        |
-                        v
-                  dbt - BRONZE
-                 Raw Data Models
-                        |
-                        v
-                  dbt - SILVER
-            Cleaning & Transformation
-                        |
-                        v
-                   dbt - GOLD
-              Analytics-Ready Data
-                        |
-                        v
-                One Big Table (OBT)
-                 Analytical Queries
+                  Airbnb CSV Datasets
+                           |
+                           v
+                      AWS S3
+                   Cloud Storage
+                           |
+                           v
+                       Snowflake
+                     STAGING Layer
+                           |
+                           v
+                      BRONZE Layer
+                    Raw Data Models
+                           |
+                           v
+                      SILVER Layer
+                 Cleaned & Transformed
+                           |
+                           v
+                       GOLD Layer
+                   Analytics-Ready
+                           |
+                           v
+                    One Big Table
+                          (OBT)
 ```
 
 ### Medallion Architecture
 
-**Bronze Layer — Raw Data**
+#### 🥉 Bronze Layer — Raw Data
 
-The Bronze layer ingests data from Snowflake's staging tables with minimal transformation. It provides a foundation for downstream processing while preserving the original source attributes.
+The Bronze layer retrieves data from Snowflake staging tables and preserves the original source attributes for downstream processing.
 
-The Bronze models include:
+**Models:**
+- `bronze_bookings` — Booking transactions and reservation details.
+- `bronze_hosts` — Host information and associated attributes.
+- `bronze_listings` — Airbnb listing and property information.
 
-- `bronze_bookings` — Booking transactions and reservation information.
-- `bronze_hosts` — Host profiles and related attributes.
-- `bronze_listings` — Airbnb property and listing information.
+Incremental materializations support processing of newly arriving records without unnecessarily rebuilding existing data.
 
-**Silver Layer — Cleaned and Transformed Data**
+#### 🥈 Silver Layer — Data Transformation
 
-The Silver layer transforms the Bronze data into more consistent and usable datasets.
+The Silver layer transforms the raw datasets into consistent, standardized, and business-relevant information.
 
-Transformations include:
+**Models:**
+- `silver_bookings` — Booking information with calculated financial metrics.
+- `silver_hosts` — Standardized host profiles with response-rate quality classifications.
+- `silver_listings` — Property attributes with nightly price categorization.
 
+**Key transformations:**
 - Standardizing host names.
-- Categorizing host response rates into quality groups.
-- Classifying listing prices into categories.
 - Calculating total booking amounts.
-- Selecting and organizing fields for downstream analysis.
+- Categorizing listing prices into low, medium, and high ranges.
+- Classifying host response rates.
+- Applying SQL transformations through reusable dbt macros.
+- Preserving timestamp fields for downstream processing.
 
-The Silver models include:
+#### 🥇 Gold Layer — Analytics-Ready Data
 
-- `silver_bookings`
-- `silver_hosts`
-- `silver_listings`
+The Gold layer brings together the transformed datasets into a unified analytical structure.
 
-**Gold Layer — Analytics-Ready Data**
+**Key models:**
+- `obt.sql` — One Big Table combining bookings, listings, and host information.
+- `fact.sql` — SQL model for fact-oriented analytical modeling.
+- `ephemeral/` — Intermediate transformation models.
 
-The Gold layer integrates transformed data into business-ready datasets.
-
-The primary analytical model is:
-
-- `obt` — A One Big Table combining bookings, listings, and host information.
-
-The OBT uses SQL joins and Jinja templating to bring multiple Snowflake tables into a unified dataset that can support reporting, exploration, and downstream analytics.
+The OBT combines booking transactions with property and host attributes to support analytical queries across multiple aspects of Airbnb activity.
 
 ---
 
@@ -93,244 +94,289 @@ The OBT uses SQL joins and Jinja templating to bring multiple Snowflake tables i
 
 | Technology | Purpose |
 |------------|---------|
-| **Amazon S3** | Cloud storage for raw Airbnb CSV datasets |
-| **Snowflake** | Cloud data warehouse for ingestion, processing, and analytics |
-| **dbt Core** | SQL-based data transformation and model management |
-| **SQL** | Data querying, transformation, and analytical modeling |
-| **Python** | Local development environment and dependency management |
-| **uv** | Python package and virtual environment management |
-| **Jinja** | Dynamic SQL generation and reusable transformation logic |
-| **Git & GitHub** | Version control and source code management |
-| **VS Code** | Development environment |
+| AWS S3 | Cloud storage for raw CSV datasets |
+| Snowflake | Cloud data warehousing and SQL processing |
+| dbt Core | Data transformation and model management |
+| SQL | Data manipulation, cleaning, and analytical modeling |
+| Python | Development environment and tooling |
+| uv | Python dependency and environment management |
+| Jinja | Dynamic SQL generation and reusable logic |
+| Git & GitHub | Source control and project management |
+| VS Code | Development environment |
 
 ---
 
 ## 📊 Project Implementation
 
-### 1. Data Ingestion with AWS S3 and Snowflake
+### 1. Data Ingestion
 
-The pipeline begins with three Airbnb datasets:
+The project uses three Airbnb datasets:
 
 - `bookings.csv`
 - `hosts.csv`
 - `listings.csv`
 
-The CSV files are stored in an Amazon S3 bucket and accessed through Snowflake using an external stage.
+The CSV datasets are stored in Amazon S3 and loaded into Snowflake using an external stage.
 
-Snowflake file formats and `COPY INTO` commands are used to load the files into the `AIRBNB.STAGING` schema.
+SQL scripts define the database objects and resources needed to support ingestion.
 
-This process demonstrates how cloud object storage can integrate with a cloud data warehouse to support data ingestion.
+The staging layer contains the source tables:
+
+- `AIRBNB.STAGING.BOOKINGS`
+- `AIRBNB.STAGING.HOSTS`
+- `AIRBNB.STAGING.LISTINGS`
+
+This stage demonstrates the integration of cloud object storage with a cloud data warehouse.
 
 ### 2. Data Transformation with dbt
 
-The project uses dbt to organize SQL transformations into Bronze, Silver, and Gold layers.
+dbt manages the transformation logic across the Bronze, Silver, and Gold layers.
 
-dbt models define how source data is transformed, while Jinja templating and macros make SQL logic reusable across models.
+The project uses SQL models, source definitions, Jinja templating, and custom macros to organize reusable transformations.
 
-The project also uses dbt's `source()` and `ref()` functions to reference upstream data and models.
+The Bronze and Silver layers implement incremental materializations, while the Gold layer combines transformed information into analytical datasets.
 
 ### 3. Incremental Data Processing
 
-Incremental materializations are used in the Bronze and Silver layers.
+Incremental models were implemented to support processing newly arriving records using timestamp-based logic.
 
-Rather than rebuilding every model from scratch, incremental logic can process newly arriving records based on timestamp fields.
+Rather than rebuilding entire datasets during every execution, incremental processing allows dbt to identify and process qualifying new records.
 
-The models use `CREATED_AT` timestamps and dbt's incremental capabilities to support more efficient recurring data processing.
+This approach demonstrates how recurring data pipelines can reduce unnecessary processing and maintain transformed datasets over time.
 
-This demonstrates an important data engineering concept: maintaining transformed datasets as source data changes over time.
+### 4. Reusable SQL Macros
 
-### 4. Data Cleaning and Business Logic
+Several custom dbt macros were implemented to support reusable transformation logic.
 
-The Silver layer applies transformations that make the raw data more useful for analysis.
+| Macro | Purpose |
+|-------|---------|
+| `multiply.sql` | Performs reusable arithmetic calculations |
+| `tag.sql` | Categorizes numerical values |
+| `trimmer.sql` | Supports string standardization |
+| `generate_schema_name.sql` | Organizes dbt models into Snowflake schemas |
 
-**Booking Transformations**
+The project also uses Jinja loops to generate portions of analytical SQL dynamically.
 
-- Select booking and listing identifiers.
-- Retain booking dates and reservation statuses.
-- Calculate booking amounts using a reusable multiplication macro.
-- Prepare booking records for analytical modeling.
+### 5. Analytical Data Modeling
 
-**Host Transformations**
+The Gold OBT combines data from the Silver layer through SQL joins.
 
-- Standardize host name formatting.
-- Preserve host registration dates and superhost indicators.
-- Categorize response rates into `VERY GOOD`, `GOOD`, `FAIR`, and `POOR`.
-- Retain timestamp information for downstream modeling.
+The resulting dataset brings together:
 
-**Listing Transformations**
-
-- Organize property characteristics and geographic attributes.
-- Retain accommodation capacity and room information.
-- Classify nightly listing prices into `low`, `medium`, and `high` categories.
-
-### 5. Gold Layer Data Modeling
-
-The Gold layer combines the cleaned datasets into an analytical One Big Table.
-
-The OBT brings together information such as:
-
+**Booking Information**
 - Booking identifiers and dates.
-- Booking amounts and fees.
-- Listing locations and property types.
-- Accommodation capacities.
-- Nightly prices and price categories.
-- Host profiles and superhost indicators.
-- Host response rates and quality classifications.
-- Record creation timestamps.
+- Booking status.
+- Financial amounts and fees.
 
-The resulting dataset provides a consolidated view of Airbnb activity without requiring analysts to manually join the individual source tables.
+**Listing Information**
+- Listing identifiers and property types.
+- Geographic information.
+- Accommodation capacity.
+- Room and bathroom counts.
+- Nightly pricing and price categories.
 
-### 6. Reusable SQL Macros
+**Host Information**
+- Host profiles and registration dates.
+- Superhost status.
+- Response rates and quality classifications.
+- Creation timestamps.
 
-Custom dbt macros help reduce repeated SQL logic and improve maintainability.
+The Gold layer provides an integrated dataset that can support analytical exploration and future BI reporting.
 
-Examples include:
+### 6. Snapshots and Historical Data
 
-| Macro | Function |
-|-------|----------|
-| `multiply()` | Performs reusable numeric calculations |
-| `tag()` | Categorizes numerical values into descriptive groups |
-| `trimmer()` | Supports text cleaning and standardization |
-| `generate_schema_name()` | Supports custom Snowflake schema organization |
+The project includes a dbt snapshots directory for exploring Slowly Changing Dimension (SCD Type 2) concepts.
 
-The project also uses Jinja loops to dynamically construct sections of the Gold OBT query.
+The snapshot implementation focuses on timestamp-based change tracking and preserving historical record versions.
 
-### 7. Snapshots and Historical Data
+This extends the project beyond basic transformations by introducing historical data modeling concepts.
 
-The project includes dbt snapshot configurations for exploring Slowly Changing Dimensions (SCD Type 2).
+### 7. Data Quality and Validation
 
-Snapshots are designed to preserve previous versions of records as source information changes.
+The project incorporates dbt compilation, testing capabilities, and Snowflake query validation.
 
-The snapshot work focuses on tracking historical attributes using unique identifiers and timestamp-based change detection.
+Validation activities include:
+
+- Checking SQL and Jinja compilation.
+- Verifying source and model dependencies.
+- Inspecting transformation outputs.
+- Reviewing schema and column consistency.
+- Checking incremental model behavior.
+- Exploring data quality tests and validation rules.
 
 ---
 
 ## 📁 Repository Structure
 
 ```text
-AWS_DBT_Snowflake/
+Airbnb_Snowflake_DBT_Data_Engineer_Project/
+│
+├── DDL/
+│   ├── ddl.sql
+│   └── resources.sql
+│
+├── SourceData/
+│   ├── bookings.csv
+│   ├── hosts.csv
+│   └── listings.csv
 │
 ├── aws_dbt_snowflake_project/
 │   │
-│   ├── models/
-│   │   ├── sources/           # Snowflake source definitions
-│   │   ├── bronze/            # Raw data models
-│   │   ├── silver/            # Cleaned and transformed models
-│   │   └── gold/              # Analytical models and OBT
+│   ├── analyses/
+│   │   ├── explore.sql
+│   │   ├── if_else.sql
+│   │   └── loop.sql
 │   │
-│   ├── macros/                # Reusable SQL and Jinja macros
-│   ├── snapshots/             # Historical data tracking definitions
-│   ├── analyses/              # Exploratory SQL queries
-│   ├── tests/                 # Data quality test definitions
-│   ├── seeds/                 # Static reference data support
-│   └── dbt_project.yml        # dbt project configuration
+│   ├── macros/
+│   │   ├── generate_schema_name.sql
+│   │   ├── multiply.sql
+│   │   ├── tag.sql
+│   │   └── trimmer.sql
+│   │
+│   ├── models/
+│   │   ├── bronze/
+│   │   │   ├── bronze_bookings.sql
+│   │   │   ├── bronze_hosts.sql
+│   │   │   └── bronze_listings.sql
+│   │   │
+│   │   ├── silver/
+│   │   │   ├── silver_bookings.sql
+│   │   │   ├── silver_hosts.sql
+│   │   │   └── silver_listings.sql
+│   │   │
+│   │   ├── gold/
+│   │   │   ├── ephemeral/
+│   │   │   ├── fact.sql
+│   │   │   └── obt.sql
+│   │   │
+│   │   └── sources/
+│   │       └── sources.yml
+│   │
+│   ├── snapshots/
+│   ├── tests/
+│   ├── dbt_project.yml
+│   └── README.md
 │
-├── pyproject.toml             # Python project configuration
-├── uv.lock                    # Dependency lockfile
-├── .gitignore                 # Git exclusions
-└── README.md                  # Project documentation
+├── LICENSE
+└── README.md
 ```
 
 ---
 
-## 📈 Data Quality and Validation
+## 📈 Project Results
 
-Data quality and validation are important parts of maintaining reliable analytical pipelines.
+The pipeline successfully connects AWS S3, Snowflake, and dbt within a layered data engineering workflow.
 
-The project incorporates dbt testing capabilities and model compilation checks to support validation of transformations.
+### Transformation Results
 
-Relevant validation concepts include:
+During development, successful dbt executions processed:
 
-- Checking unique identifiers.
-- Identifying missing values.
-- Validating source-to-model relationships.
-- Confirming that models compile successfully.
-- Verifying that transformed tables contain the expected columns.
-- Inspecting incremental model behavior.
+| Dataset | Rows Processed |
+|---------|---------------:|
+| Silver Bookings | 5,000 |
+| Silver Listings | 500 |
+| Silver Hosts | 200 |
 
-These practices help ensure that data remains consistent as it moves through the transformation layers.
+These figures represent records processed in the observed dbt runs, rather than benchmarks or guaranteed current table row counts.
+
+### Key Outcomes
+
+- Established a working AWS S3-to-Snowflake ingestion process.
+- Developed Bronze, Silver, and Gold dbt transformation layers.
+- Implemented incremental processing logic.
+- Created reusable SQL macros for transformation tasks.
+- Integrated multiple datasets into a Gold OBT.
+- Worked with snapshot-based historical modeling concepts.
+- Organized and published the project in GitHub.
 
 ---
 
 ## 💡 Technical Challenges and Lessons Learned
 
-Building this project provided practical experience troubleshooting real data engineering problems across multiple technologies.
+This project provided practical experience troubleshooting issues commonly encountered during data pipeline development.
 
-### AWS and Snowflake Integration
+### Cloud Storage and Warehouse Integration
 
-Configured an Amazon S3 external stage and resolved access-related issues when connecting Snowflake to cloud storage.
+Configured an Amazon S3 external stage and resolved AWS access-related errors when connecting Snowflake to source data.
 
-This reinforced the distinction between cloud storage, warehouse compute resources, and authentication.
+Learned how object storage, Snowflake warehouse compute, and cloud permissions interact.
 
-### Python and dbt Environment Configuration
+### Environment and Dependency Management
 
-Configured a Python virtual environment, managed dependencies using uv, and resolved Windows PATH and environment-related issues.
+Set up a Python virtual environment and installed dbt using uv.
 
-Established a working dbt connection to Snowflake and validated the configuration using `dbt debug`.
+Resolved Windows PATH configuration, PowerShell execution policy, and virtual environment issues.
+
+### Snowflake Authentication
+
+Configured and validated dbt's Snowflake connection using `dbt debug`.
+
+Troubleshot authentication and profile configuration issues before successfully connecting the transformation environment.
 
 ### SQL and Jinja Debugging
 
-Troubleshot SQL compilation errors, incorrect column references, missing macro names, and Jinja syntax issues.
+Resolved compilation errors involving SQL syntax, missing columns, Jinja macros, and model references.
 
-This provided experience interpreting Snowflake and dbt error messages and inspecting compiled SQL.
+Gained experience using database error messages and compiled SQL to locate problems in transformations.
 
-### Model Dependencies and Incremental Processing
+### Incremental Models and Dependencies
 
-Resolved circular dependencies caused by self-referencing dbt models.
+Identified circular dependencies caused by self-referencing dbt models and corrected incremental processing logic.
 
-Implemented incremental model logic and explored how database objects are rebuilt and maintained.
+Improved understanding of dbt model dependencies, materialization strategies, and rebuild behavior.
 
 ### Data Modeling and Schema Consistency
 
-Identified missing fields between transformation layers and updated upstream models to maintain the expected Gold layer schema.
+Resolved mismatches between Bronze, Silver, and Gold models, including missing timestamp columns needed by downstream analytical datasets.
 
-This demonstrated the importance of data lineage, schema validation, and consistent transformations.
+Learned the importance of validating upstream schemas and downstream dependencies.
 
 ---
 
 ## 🎯 Skills Demonstrated
 
-This project provided hands-on experience with:
-
-- Cloud data ingestion using Amazon S3 and Snowflake.
-- SQL development and cloud data warehousing.
-- ELT pipeline development.
+- Cloud data engineering with AWS and Snowflake.
+- Data ingestion from object storage.
+- SQL-based ELT pipeline development.
 - Medallion Architecture.
-- Incremental data transformations.
+- Incremental data processing.
 - Data cleaning and standardization.
-- dbt models, macros, and Jinja templating.
-- Analytical data modeling and multi-table joins.
-- Data lineage and dependency management.
-- Snapshot-based historical data modeling concepts.
-- Git-based version control.
-- Debugging and validating data pipelines.
+- Analytical data modeling.
+- dbt Core and Jinja templating.
+- Reusable SQL macro development.
+- Data lineage and model dependency management.
+- Historical data modeling concepts.
+- GitHub version control.
+- Pipeline troubleshooting and validation.
 
 ---
 
 ## 🚀 Future Improvements
 
-Potential improvements to expand the project include:
-
-- [ ] Expand automated dbt testing and data quality coverage.
-- [ ] Add a Power BI or Tableau dashboard using the Gold layer.
+- [ ] Develop a Power BI dashboard using the Gold OBT.
+- [ ] Expand automated dbt tests and data quality coverage.
 - [ ] Implement automated pipeline scheduling.
-- [ ] Introduce GitHub Actions for CI/CD.
-- [ ] Improve incremental loading and change detection.
-- [ ] Add pipeline monitoring and error notifications.
-- [ ] Expand documentation and data lineage visibility.
-- [ ] Replace hardcoded warehouse object references with dbt-managed dependencies where appropriate.
+- [ ] Add CI/CD workflows using GitHub Actions.
+- [ ] Introduce monitoring and error notifications.
+- [ ] Optimize incremental loading and transformation performance.
+- [ ] Expand analytical metrics and reporting capabilities.
+- [ ] Improve model dependencies using dbt `ref()` relationships.
+
+---
+
+## 📄 License
+
+This repository includes an MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
 ## 👨‍💻 About Me
 
-Hi! I'm **Simon Yang**, an undergraduate student at the **University of North Carolina at Chapel Hill**, interested in data engineering, cloud technologies, and data analytics.
+Hi! I'm **Simon Yang**, an undergraduate student at the **University of North Carolina at Chapel Hill**, with an interest in data engineering, cloud computing, and data analytics.
 
-I enjoy working on hands-on projects that allow me to apply technical concepts to real-world data problems.
+I enjoy developing hands-on projects that allow me to apply technical concepts to practical data problems.
 
-Through projects like this one, I'm developing my skills in SQL, Python, cloud data platforms, and data pipeline development as I prepare for a career in data engineering.
-
-I'm always interested in learning new technologies, improving my technical skills, and connecting with others working in data.
+Through projects like this, I'm expanding my experience with SQL, Python, cloud data platforms, and modern data pipeline development as I prepare for a career in data engineering.
 
 ### Connect With Me
 
